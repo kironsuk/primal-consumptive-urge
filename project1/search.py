@@ -84,13 +84,29 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    start = problem.getStartState()
-    print 'start', start
-    successors = problem.getSuccessors(start)
-    stack = util.Stack()
-    for s in successors:
-        stack.push(s)
-	print s
+    print problem
+    closed = set()
+    fringe = util.Stack()
+    fringe.push((problem.getStartState(),))
+    pathTrace = {}
+
+    while True:
+        if fringe.isEmpty():
+            util.raiseNotDefined()
+        node = fringe.pop()
+        if problem.isGoalState(node[0]):
+            curr = node
+            directions = []
+            while (len(curr) > 1):
+                directions.insert(0,curr[1])
+                curr = pathTrace[curr]
+            return directions
+        if node not in closed:
+            closed.add(node[0])
+            for child_node in problem.getSuccessors(node[0]):
+                if child_node[0] not in closed:
+                    fringe.push(child_node)
+                    pathTrace[child_node] = node
 
 def breadthFirstSearch(problem):
     """
