@@ -83,7 +83,6 @@ def depthFirstSearch(problem):
     print "Is the start a goal?", problem.isGoalState(problem.getStartState())
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
-    "*** YOUR CODE HERE ***"
     closed = set()
     fringe = util.Stack()
     fringe.push((problem.getStartState(),))
@@ -112,7 +111,6 @@ def breadthFirstSearch(problem):
     Search the shallowest nodes in the search tree first.
     [2nd Edition: p 73, 3rd Edition: p 82]
     """
-    "*** YOUR CODE HERE ***"
     closed = set()
     fringe = util.Queue()
     fringe.push((problem.getStartState(),))
@@ -123,6 +121,7 @@ def breadthFirstSearch(problem):
         if fringe.isEmpty():
             util.raiseNotDefined()
         node = fringe.pop()
+        #print node
         if problem.isGoalState(node[0]):
             curr = node
             directions = []
@@ -136,10 +135,53 @@ def breadthFirstSearch(problem):
                 fringe.push(child_node)
                 pathTrace[child_node] = node
 
+import heapq
+
+class PriorityQueue:
+    """
+      Implements a priority queue data structure, but with a USEFUL pop()
+    """
+    def  __init__(self):
+        self.heap = []
+
+    def push(self, item, priority):
+        pair = (priority,item)
+        heapq.heappush(self.heap,pair)
+
+    def pop(self):
+        priority,item = heapq.heappop(self.heap)
+        return priority, item
+
+    def isEmpty(self):
+        return len(self.heap) == 0
+
 def uniformCostSearch(problem):
     "Search the node of least total cost first. "
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    closed = set()
+    fringe = PriorityQueue()
+    fringe.push((problem.getStartState(),None,0), 0)
+    pathTrace = {}
+
+    while True:
+        if fringe.isEmpty():
+            util.raiseNotDefined()
+        cost, node = fringe.pop()
+        print cost, node
+        while node[0] in closed:
+            cost, node = fringe.pop()
+            print "closed"
+            print cost, node
+        closed.add(node[0])
+        if problem.isGoalState(node[0]):
+            curr = node
+            directions = []
+            while (curr[1] is not None):
+                directions.insert(0,curr[1])
+                curr = pathTrace[curr]
+            return directions
+    	for child_node in problem.getSuccessors(node[0]):
+            fringe.push(child_node, cost+child_node[2])
+            pathTrace[child_node] = node
 
 def nullHeuristic(state, problem=None):
     """
@@ -150,8 +192,29 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     "Search the node that has the lowest combined cost and heuristic first."
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    closed = set()
+    fringe = PriorityQueue()
+    start = problem.getStartState()
+    fringe.push((start,None,0), heuristic(start, problem))
+    pathTrace = {}
+
+    while True:
+        if fringe.isEmpty():
+            util.raiseNotDefined()
+        cost, node = fringe.pop()
+        while node[0] in closed:
+            cost, node = fringe.pop()
+        closed.add(node[0])
+        if problem.isGoalState(node[0]):
+            curr = node
+            directions = []
+            while (curr[1] is not None):
+                directions.insert(0,curr[1])
+                curr = pathTrace[curr]
+            return directions
+    	for child_node in problem.getSuccessors(node[0]):
+            fringe.push(child_node, cost+child_node[2] + heuristic(node[0], problem))
+            pathTrace[child_node] = node
 
 
 # Abbreviations
