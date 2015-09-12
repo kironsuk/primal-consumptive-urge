@@ -128,6 +128,7 @@ def breadthFirstSearch(problem):
             while (len(curr) > 1):
                 directions.insert(0,curr[1])
                 curr = pathTrace[curr]
+            print directions
             return directions
     	for child_node in problem.getSuccessors(node[0]):
             if child_node[0] not in closed:
@@ -140,17 +141,22 @@ import heapq
 class PriorityQueue:
     """
       Implements a priority queue data structure, but with a USEFUL pop()
+      and a third option for cost without heurisitic
     """
     def  __init__(self):
         self.heap = []
 
-    def push(self, item, priority):
-        pair = (priority,item)
-        heapq.heappush(self.heap,pair)
+    def push(self, item, parent, cost, priority=None):
+        if priority is None:
+            priority = cost
+        trip = (cost,item, parent)
+        quad = (priority, trip)
+        heapq.heappush(self.heap,quad)
 
     def pop(self):
-        priority,item = heapq.heappop(self.heap)
-        return priority, item
+        priority,trip = heapq.heappop(self.heap)
+        cost,item,parent = trip
+        return cost, item, parent
 
     def isEmpty(self):
         return len(self.heap) == 0
@@ -159,19 +165,19 @@ def uniformCostSearch(problem):
     "Search the node of least total cost first. "
     closed = set()
     fringe = PriorityQueue()
-    fringe.push((problem.getStartState(),None,0), 0)
+    start = problem.getStartState()
+    fringe.push((start,None,0), None, 0)
     pathTrace = {}
-
+    pathTrace[start] = None
     while True:
         if fringe.isEmpty():
             util.raiseNotDefined()
-        cost, node = fringe.pop()
-        print cost, node
+        cost, node, parent = fringe.pop()
         while node[0] in closed:
-            cost, node = fringe.pop()
-            print "closed"
-            print cost, node
+            cost, node, parent = fringe.pop()
         closed.add(node[0])
+        pathTrace[node] = parent
+
         if problem.isGoalState(node[0]):
             curr = node
             directions = []
@@ -179,9 +185,9 @@ def uniformCostSearch(problem):
                 directions.insert(0,curr[1])
                 curr = pathTrace[curr]
             return directions
-    	for child_node in problem.getSuccessors(node[0]):
-            fringe.push(child_node, cost+child_node[2])
-            pathTrace[child_node] = node
+
+        for child_node in problem.getSuccessors(node[0]):
+            fringe.push(child_node, node, cost+child_node[2])
 
 def nullHeuristic(state, problem=None):
     """
@@ -195,16 +201,18 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     closed = set()
     fringe = PriorityQueue()
     start = problem.getStartState()
-    fringe.push((start,None,0), heuristic(start, problem))
+    fringe.push((start,None,0), None, 0,heuristic(start, problem))
     pathTrace = {}
-
+    pathTrace[start] = None
     while True:
         if fringe.isEmpty():
             util.raiseNotDefined()
-        cost, node = fringe.pop()
+        cost, node, parent = fringe.pop()
         while node[0] in closed:
-            cost, node = fringe.pop()
+            cost, node, parent = fringe.pop()
         closed.add(node[0])
+        pathTrace[node] = parent
+
         if problem.isGoalState(node[0]):
             curr = node
             directions = []
@@ -212,10 +220,9 @@ def aStarSearch(problem, heuristic=nullHeuristic):
                 directions.insert(0,curr[1])
                 curr = pathTrace[curr]
             return directions
-    	for child_node in problem.getSuccessors(node[0]):
-            fringe.push(child_node, cost+child_node[2] + heuristic(node[0], problem))
-            pathTrace[child_node] = node
 
+        for child_node in problem.getSuccessors(node[0]):
+            fringe.push(child_node, node, cost+child_node[2], cost+child_node[2] + heuristic(node[0], problem))
 
 # Abbreviations
 bfs = breadthFirstSearch
