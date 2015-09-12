@@ -276,17 +276,63 @@ class CornersProblem(search.SearchProblem):
         self._expanded = 0 # Number of search nodes expanded
 
         "*** YOUR CODE HERE ***"
+        heuristicInfo = {}
+        
+        heuristicInfo['bltl'] = self.aStarSearch( self.corners[0], self.corners[1])
+        heuristicInfo['blbr'] = self.aStarSearch( self.corners[0], self.corners[2])
+        heuristicInfo['bltr'] = self.aStarSearch( self.corners[0], self.corners[3])
+        heuristicInfo['tlbr'] = self.aStarSearch( self.corners[1], self.corners[2])
+        heuristicInfo['tltr'] = self.aStarSearch( self.corners[1], self.corners[3])
+        heuristicInfo['brtr'] = self.aStarSearch( self.corners[2], self.corners[3])
+        
+        heuristicInfo['tlbl'] = self.aStarSearch( self.corners[1], self.corners[0])
+        heuristicInfo['brbl'] = self.aStarSearch( self.corners[2], self.corners[0])
+        heuristicInfo['trbl'] = self.aStarSearch( self.corners[3], self.corners[0])
+        heuristicInfo['brtl'] = self.aStarSearch( self.corners[2], self.corners[1])
+        heuristicInfo['trtl'] = self.aStarSearch( self.corners[3], self.corners[1])
+        heuristicInfo['trbr'] = self.aStarSearch( self.corners[3], self.corners[2])
+        
+        self.heuristicInfo = heuristicInfo
+                  
+    def dynamicHeur(start, corners):
+        if len(corners) == 1:
+            return self.heuristicInfo[start + corner]
+
+        best = float(inf)
+        for corner in corners:
+            cur = self.heuristicInfo[start + corner]
+            rec = dynamicHeur(corner, corners-set([corner]))
+            val = cur + rec
+            if val < best:
+                best = val
+        return best
+        
+    def aStarSearch(self, start, goal):
+        "Search the node that has the lowest combined cost and heuristic first."
+        closed = set()
+        fringe = search.PriorityQueue()
+        fringe.push(((start, frozenset()),None,0), dist(start, goal))
+
+        while True:
+            if fringe.isEmpty():
+                util.raiseNotDefined()
+            cost, node = fringe.pop()
+            while node[0] in closed:
+                cost, node = fringe.pop()
+            closed.add(node[0])
+            if node[0][0] is goal:
+                return cost
+            print 'node', node
+            for child_node in self.getSuccessors(node[0]):
+                fringe.push(child_node, cost+child_node[2] + dist(node[0][0], goal))
 
     def getStartState(self):
         "Returns the start state (in your state space, not the full Pacman state space)"
-        return self.startingPosition, False, False, False, False
+        return self.startingPosition, set(['bl','tl','br','tr'])
 
     def isGoalState(self, state):
         "Returns whether this search state is a goal state of the problem"
-        for i in range(1,5):
-            if state[i] is False:
-                return False
-        return True
+        return len(state[1]) == 0
 
     def getSuccessors(self, state):
         """
@@ -310,17 +356,23 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
             
             newState = state
+            print state
             x,y = state[0]
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
             newPosition = (nextx, nexty)
-            nc = [False, False, False, False]
+            nc = set()
             hitsWall = self.walls[nextx][nexty]
+            if (not newPosition == self.corners[0]) and 'bl' in state[1]:
+                nc.add('bl')
+            if (not newPosition == self.corners[1]) and 'tl' in state[1]:
+                nc.add('tl')
+            if (not newPosition == self.corners[2]) and 'br' in state[1]:
+                nc.add('br')
+            if (not newPosition == self.corners[3]) and 'tr' in state[1]:
+                nc.add('tr')  
+            newState = (newPosition, frozenset(nc))
             if not hitsWall:
-            	for i in range(4):
-            	    if state[i+1] == True or newPosition == self.corners[i]:
-            	        nc[i] = True
-            	newState = (newPosition, nc[0], nc[1], nc[2], nc[3])
                 successors.append((newState, action, 1))
 
         self._expanded += 1
@@ -355,9 +407,39 @@ def cornersHeuristic(state, problem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+    
+    best = float(inf)
+    for corner in state[1]:
+        if corner == 'bl':
+            cur = dist(state[0], corners[0])
+            rec = dynamicHeur('bl', state[1] - set(['bl']))
+            val = cur + rec
+            if val < best:
+                best = val
+        if corner == 'tl':
+            cur = dist(state[0], corners[1])
+            rec = dynamicHeur('tl', state[1] - set(['tl']))
+            val = cur + rec
+            if val < best:
+                best = val
+        if corner == 'br':
+            cur = dist(state[0], corners[2])
+            rec = dynamicHeur('br', state[1] - set(['br']))
+            val = cur + rec
+            if val < best:
+                best = val
+        if corner == 'tr':
+            cur = dist(state[0], corners[3])
+            rec = dynamicHeur('tr', state[1] - set(['tr']))
+            val = cur + rec
+            if val < best:
+                best = val
+    return best
+    
 
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+def dist(position, goal):
+    "The Manhattan distance heuristic for a PositionSearchProblem"
+    return abs(position[0] - goal[0]) + abs(position[1] - goal[1])
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
