@@ -294,14 +294,17 @@ class CornersProblem(search.SearchProblem):
         
         self.heuristicInfo = heuristicInfo
                   
-    def dynamicHeur(start, corners):
+    def dynamicHeur(self, start, corners):
+        if len(corners) == 0:
+            return 0
         if len(corners) == 1:
-            return self.heuristicInfo[start + corner]
+            for corner in corners:
+                return self.heuristicInfo[start + corner]
 
-        best = float(inf)
+        best = float('inf')
         for corner in corners:
             cur = self.heuristicInfo[start + corner]
-            rec = dynamicHeur(corner, corners-set([corner]))
+            rec = self.dynamicHeur(corner, corners-set([corner]))
             val = cur + rec
             if val < best:
                 best = val
@@ -311,24 +314,25 @@ class CornersProblem(search.SearchProblem):
         "Search the node that has the lowest combined cost and heuristic first."
         closed = set()
         fringe = search.PriorityQueue()
-        fringe.push(((start, frozenset()),None,0), dist(start, goal))
+        fringe.push(((start, frozenset()),None,0), None, 0, dist(start, goal))
 
         while True:
             if fringe.isEmpty():
                 util.raiseNotDefined()
-            cost, node = fringe.pop()
+            cost, node, parent = fringe.pop()
             while node[0] in closed:
-                cost, node = fringe.pop()
+                if fringe.isEmpty():
+                    util.raiseNotDefined()
+                cost, node, parent = fringe.pop()
             closed.add(node[0])
-            if node[0][0] is goal:
+            if dist(node[0][0], goal) is 0:
                 return cost
-            print 'node', node
             for child_node in self.getSuccessors(node[0]):
-                fringe.push(child_node, cost+child_node[2] + dist(node[0][0], goal))
+                fringe.push(child_node, node, cost+child_node[2], cost+child_node[2] + dist(node[0][0], goal))
 
     def getStartState(self):
         "Returns the start state (in your state space, not the full Pacman state space)"
-        return self.startingPosition, set(['bl','tl','br','tr'])
+        return self.startingPosition, frozenset(['bl','tl','br','tr'])
 
     def isGoalState(self, state):
         "Returns whether this search state is a goal state of the problem"
@@ -356,7 +360,6 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
             
             newState = state
-            print state
             x,y = state[0]
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
@@ -408,29 +411,29 @@ def cornersHeuristic(state, problem):
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
     
-    best = float(inf)
+    best = float('inf')
     for corner in state[1]:
         if corner == 'bl':
             cur = dist(state[0], corners[0])
-            rec = dynamicHeur('bl', state[1] - set(['bl']))
+            rec = problem.dynamicHeur('bl', state[1] - set(['bl']))
             val = cur + rec
             if val < best:
                 best = val
         if corner == 'tl':
             cur = dist(state[0], corners[1])
-            rec = dynamicHeur('tl', state[1] - set(['tl']))
+            rec = problem.dynamicHeur('tl', state[1] - set(['tl']))
             val = cur + rec
             if val < best:
                 best = val
         if corner == 'br':
             cur = dist(state[0], corners[2])
-            rec = dynamicHeur('br', state[1] - set(['br']))
+            rec = problem.dynamicHeur('br', state[1] - set(['br']))
             val = cur + rec
             if val < best:
                 best = val
         if corner == 'tr':
             cur = dist(state[0], corners[3])
-            rec = dynamicHeur('tr', state[1] - set(['tr']))
+            rec = problem.dynamicHeur('tr', state[1] - set(['tr']))
             val = cur + rec
             if val < best:
                 best = val
