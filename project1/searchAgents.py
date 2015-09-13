@@ -277,7 +277,7 @@ class CornersProblem(search.SearchProblem):
 
         "*** YOUR CODE HERE ***"
         heuristicInfo = {}
-        
+        """
         heuristicInfo['bltl'] = self.aStarSearch( self.corners[0], self.corners[1])
         heuristicInfo['blbr'] = self.aStarSearch( self.corners[0], self.corners[2])
         heuristicInfo['bltr'] = self.aStarSearch( self.corners[0], self.corners[3])
@@ -291,9 +291,44 @@ class CornersProblem(search.SearchProblem):
         heuristicInfo['brtl'] = self.aStarSearch( self.corners[2], self.corners[1])
         heuristicInfo['trtl'] = self.aStarSearch( self.corners[3], self.corners[1])
         heuristicInfo['trbr'] = self.aStarSearch( self.corners[3], self.corners[2])
+        """
+        heuristicInfo['bltl'] = dist( self.corners[0], self.corners[1])
+        heuristicInfo['blbr'] = dist( self.corners[0], self.corners[2])
+        heuristicInfo['bltr'] = dist( self.corners[0], self.corners[3])
+        heuristicInfo['tlbr'] = dist( self.corners[1], self.corners[2])
+        heuristicInfo['tltr'] = dist( self.corners[1], self.corners[3])
+        heuristicInfo['brtr'] = dist( self.corners[2], self.corners[3])
+        heuristicInfo['tlbl'] = dist( self.corners[0], self.corners[1])
+        heuristicInfo['brbl'] = dist( self.corners[0], self.corners[2])
+        heuristicInfo['trbl'] = dist( self.corners[0], self.corners[3])
+        heuristicInfo['brtl'] = dist( self.corners[1], self.corners[2])
+        heuristicInfo['trtl'] = dist( self.corners[1], self.corners[3])
+        heuristicInfo['trbr'] = dist( self.corners[2], self.corners[3])
         
+        """
+        print 'bltl', heuristicInfo['bltl']
+        print 'blbr', heuristicInfo['blbr']
+        print 'bltr', heuristicInfo['bltr']
+        print 'tlbr', heuristicInfo['tlbr']
+        print 'tltr', heuristicInfo['tltr']
+        print 'brtr', heuristicInfo['brtr']
+        print 'tlbl', heuristicInfo['tlbl']
+        print 'brbl', heuristicInfo['brbl']
+        print 'trbl', heuristicInfo['trbl']
+        print 'brtl', heuristicInfo['brtl']
+        print 'trtl', heuristicInfo['trtl']
+        print 'trbr', heuristicInfo['trbr']
+        """        
         self.heuristicInfo = heuristicInfo
-                  
+        
+        """
+        print "self.dynamicHeur('bl', set(['tl', 'br', 'tr'])):", self.dynamicHeur('bl', set(['tl', 'br', 'tr']))
+        print "self.dynamicHeur('tl', set(['bl', 'br', 'tr'])):", self.dynamicHeur('tl', set(['bl', 'br', 'tr']))
+        print "self.dynamicHeur('br', set(['tl', 'bl', 'tr'])):", self.dynamicHeur('br', set(['tl', 'bl', 'tr']))
+        print "self.dynamicHeur('tr', set(['tl', 'br', 'bl'])):", self.dynamicHeur('tr', set(['tl', 'br', 'bl']))
+        
+        print "\n\n\n\n\n\n\nheur:", cornersHeuristic(((6, 5), frozenset(['bl', 'br', 'tl', 'tr'])), self)
+        """
     def dynamicHeur(self, start, corners):
         if len(corners) == 0:
             return 0
@@ -328,7 +363,7 @@ class CornersProblem(search.SearchProblem):
             if dist(node[0][0], goal) is 0:
                 return cost
             for child_node in self.getSuccessors(node[0]):
-                fringe.push(child_node, node, cost+child_node[2], cost+child_node[2] + dist(node[0][0], goal))
+                fringe.push(child_node, node, cost+child_node[2], cost+child_node[2] + dist(child_node[0][0], goal))
 
     def getStartState(self):
         "Returns the start state (in your state space, not the full Pacman state space)"
@@ -410,7 +445,11 @@ def cornersHeuristic(state, problem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-    
+    #print state
+
+    if len(state[1]) == 0:
+        return 0
+
     best = float('inf')
     for corner in state[1]:
         if corner == 'bl':
@@ -437,6 +476,10 @@ def cornersHeuristic(state, problem):
             val = cur + rec
             if val < best:
                 best = val
+        #if len(state[1]) <= 1:
+            #print corner, ' corner:', cur, 'dynamicHeur', rec, 'total', val
+
+    #print best
     return best
     
 

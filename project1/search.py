@@ -154,7 +154,9 @@ class PriorityQueue:
         heapq.heappush(self.heap,quad)
 
     def pop(self):
-        priority,trip = heapq.heappop(self.heap)
+        a = heapq.heappop(self.heap)
+        #print self.heap
+        priority,trip = a
         cost,item,parent = trip
         return cost, item, parent
 
@@ -219,10 +221,11 @@ def aStarSearch(problem, heuristic=nullHeuristic):
             while (curr[1] is not None):
                 directions.insert(0,curr[1])
                 curr = pathTrace[curr]
+            print directions
             return directions
 
         for child_node in problem.getSuccessors(node[0]):
-            fringe.push(child_node, node, cost+child_node[2], cost+child_node[2] + heuristic(node[0], problem))
+            fringe.push(child_node, node, cost+child_node[2], cost+child_node[2] + heuristic(child_node[0], problem))
 
 # Abbreviations
 bfs = breadthFirstSearch
