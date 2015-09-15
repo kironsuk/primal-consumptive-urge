@@ -304,31 +304,9 @@ class CornersProblem(search.SearchProblem):
         heuristicInfo['brtl'] = dist( self.corners[1], self.corners[2])
         heuristicInfo['trtl'] = dist( self.corners[1], self.corners[3])
         heuristicInfo['trbr'] = dist( self.corners[2], self.corners[3])
-        
-        """
-        print 'bltl', heuristicInfo['bltl']
-        print 'blbr', heuristicInfo['blbr']
-        print 'bltr', heuristicInfo['bltr']
-        print 'tlbr', heuristicInfo['tlbr']
-        print 'tltr', heuristicInfo['tltr']
-        print 'brtr', heuristicInfo['brtr']
-        print 'tlbl', heuristicInfo['tlbl']
-        print 'brbl', heuristicInfo['brbl']
-        print 'trbl', heuristicInfo['trbl']
-        print 'brtl', heuristicInfo['brtl']
-        print 'trtl', heuristicInfo['trtl']
-        print 'trbr', heuristicInfo['trbr']
-        """        
+               
         self.heuristicInfo = heuristicInfo
-        
-        """
-        print "self.dynamicHeur('bl', set(['tl', 'br', 'tr'])):", self.dynamicHeur('bl', set(['tl', 'br', 'tr']))
-        print "self.dynamicHeur('tl', set(['bl', 'br', 'tr'])):", self.dynamicHeur('tl', set(['bl', 'br', 'tr']))
-        print "self.dynamicHeur('br', set(['tl', 'bl', 'tr'])):", self.dynamicHeur('br', set(['tl', 'bl', 'tr']))
-        print "self.dynamicHeur('tr', set(['tl', 'br', 'bl'])):", self.dynamicHeur('tr', set(['tl', 'br', 'bl']))
-        
-        print "\n\n\n\n\n\n\nheur:", cornersHeuristic(((6, 5), frozenset(['bl', 'br', 'tl', 'tr'])), self)
-        """
+
     def dynamicHeur(self, start, corners):
         if len(corners) == 0:
             return 0
@@ -344,7 +322,7 @@ class CornersProblem(search.SearchProblem):
             if val < best:
                 best = val
         return best
-        
+    """    
     def aStarSearch(self, start, goal):
         "Search the node that has the lowest combined cost and heuristic first."
         closed = set()
@@ -364,7 +342,7 @@ class CornersProblem(search.SearchProblem):
                 return cost
             for child_node in self.getSuccessors(node[0]):
                 fringe.push(child_node, node, cost+child_node[2], cost+child_node[2] + dist(child_node[0][0], goal))
-
+    """
     def getStartState(self):
         "Returns the start state (in your state space, not the full Pacman state space)"
         return self.startingPosition, frozenset(['bl','tl','br','tr'])
@@ -445,7 +423,6 @@ def cornersHeuristic(state, problem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-    #print state
 
     if len(state[1]) == 0:
         return 0
@@ -476,10 +453,6 @@ def cornersHeuristic(state, problem):
             val = cur + rec
             if val < best:
                 best = val
-        #if len(state[1]) <= 1:
-            #print corner, ' corner:', cur, 'dynamicHeur', rec, 'total', val
-
-    #print best
     return best
     
 
@@ -549,6 +522,26 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
 
+def dynamicHeur(start, corners, heuristicInfo):
+    #print 'enter'
+    if len(corners) == 0:
+        return 0
+    if len(corners) == 1:
+        for corner in corners:
+            return dist(start,corner)
+
+    best = float('inf')
+    for corner in corners:
+        cur = dist(start,corner)
+        if str((corner, corners-set([corner]))) not in heuristicInfo:
+            #print 'recursive'
+            heuristicInfo[str((corner, corners-set([corner])))] = dynamicHeur(corner, corners-set([corner]), heuristicInfo)
+        rec = heuristicInfo[str((corner, corners-set([corner])))]
+        val = cur + rec
+        if val < best:
+            best = val
+    return best
+
 def foodHeuristic(state, problem):
     """
     Your heuristic for the FoodSearchProblem goes here.
@@ -575,8 +568,149 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access problem.heuristicInfo['wallCount']
     """
     position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    food = []
+    printing = False
+    ##############################################################################
+
+    #same as cornersheuristic but with limited subset of pellets
+    food = set()
+    for i,row in enumerate(foodGrid):
+        for j,square in enumerate(row):
+            if square:
+                food.add((i,j))
+    if 'remove' not in problem.heuristicInfo:
+        foodCopy = set(food)
+        remove = set()
+        for i in range(len(food)-13):
+            remove.add(foodCopy.pop())
+        problem.heuristicInfo['remove'] = frozenset(remove)
+        #print food, remove
+    remove = problem.heuristicInfo['remove']
+    answer = dynamicHeur(position, food-remove, problem.heuristicInfo)
+    return answer
+
+    """
+    #return manhattan distance to farthest pellet
+    if printing: print position
+
+    if printing: print foodGrid
+    distance = float('inf')
+    #if first: print position
+    for i,row in enumerate(foodGrid):
+     #   if first: print row
+        for j,square in enumerate(row):
+      #      if first: print problem.walls.width-1-j,i
+            if square:
+                food.append((i,j))
+    farthest = 0
+    for a in food:
+        toPacman = dist(a, position)
+        if toPacman > farthest:
+            farthest = toPacman
+    return farthest
+    """
+
+    """
+    #return max horizontal distance + max vertical distance between pellets
+    if printing: print position
+
+    if printing: print foodGrid
+    distance = float('inf')
+    #if first: print position
+    for i,row in enumerate(foodGrid):
+     #   if first: print row
+        for j,square in enumerate(row):
+      #      if first: print problem.walls.width-1-j,i
+            if square:
+                food.append((i,j))
+    left, bottom = position
+    right, top = position
+    for a in food:
+        (x, y) = a
+        if x<left:
+            left = x
+        if x>right:
+            right = x
+        if y<bottom:
+            bottom = y
+        if y>top:
+            top = y
+
+    x,y = position
+
+    horiz = min(x-left, right-x)
+    vert = min(y-bottom, top-y)
+
+    #if printing: print distance, '\n'
+    return right-left+top-bottom + horiz + vert
+    """
+    """
+    #sum of manhattan distance to nearest pellet/pacman for each pellet
+    #inconsistent
+    distance = float('inf')
+    pellet = None
+    for i,row in enumerate(foodGrid):
+        for j,square in enumerate(row):
+            if square:
+                food.append((i,j))
+                dist2 = dist(position, (i,j))
+                if dist2 < distance:
+                    distance = dist2
+                    pellet = (i,j)
+    if pellet is None:
+        return 0
+    
+    food2 = list(food)
+    food2.remove(pellet)
+
+    total = 0
+    for a in food2:
+        closest = float('inf')
+        for b in food:
+            if a is not b:
+                between = dist(a,b)
+                if between < closest:
+                    closest = between
+        total = total + closest
+    return total + distance
+    """
+    """
+    #distance of closest pair*number of pellets-1 + closest to pacman
+    if printing: print position
+
+    if printing: print foodGrid
+    pellets = 0
+    distance = float('inf')
+    #if first: print position
+    for i,row in enumerate(foodGrid):
+     #   if first: print row
+        for j,square in enumerate(row):
+      #      if first: print problem.walls.width-1-j,i
+            if square:
+                food.append((i,j))
+                dist2 = dist(position, (i,j))
+                if printing: print (i,j), dist2
+                if dist2 < distance:
+                    distance = dist2
+                pellets = pellets + 1
+    if pellets == 0:
+        return 0
+    
+    closest = float('inf')
+    for a in food:
+        for b in food:
+            if a is not b:
+                between = dist(a,b)
+                if printing: print a, b, between
+                if between < closest:
+                    closest = between
+    if closest == float('inf'):
+        closest = 1
+    if printing: print closest
+
+    #if printing: print distance, '\n'
+    return closest*(pellets-1) + distance
+    """
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -603,8 +737,7 @@ class ClosestDotSearchAgent(SearchAgent):
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
 
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return search.uniformCostSearch(problem)
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -639,8 +772,7 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         """
         x,y = state
 
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.food[x][y]
 
 ##################
 # Mini-contest 1 #
