@@ -568,61 +568,46 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access problem.heuristicInfo['wallCount']
     """
     position, foodGrid = state
-    food = []
-    printing = False
-    ##############################################################################
-
-    #same as cornersheuristic but with limited subset of pellets
-    food = set()
-    for i,row in enumerate(foodGrid):
-        for j,square in enumerate(row):
-            if square:
-                food.add((i,j))
-    if 'remove' not in problem.heuristicInfo:
-        foodCopy = set(food)
-        remove = set()
-        for i in range(len(food)-13):
-            remove.add(foodCopy.pop())
-        problem.heuristicInfo['remove'] = frozenset(remove)
-        #print food, remove
-    remove = problem.heuristicInfo['remove']
-    answer = dynamicHeur(position, food-remove, problem.heuristicInfo)
-    return answer
-
+    (answer1, answer2, answer3, answer4) = (0,0,0,0)
     """
-    #return manhattan distance to farthest pellet
-    if printing: print position
-
-    if printing: print foodGrid
+    #distance of closest pair*number of pellets-1 + closest to pacman
+    food = []
+    pellets = 0
     distance = float('inf')
-    #if first: print position
     for i,row in enumerate(foodGrid):
-     #   if first: print row
         for j,square in enumerate(row):
-      #      if first: print problem.walls.width-1-j,i
             if square:
                 food.append((i,j))
+                dist2 = dist(position, (i,j))
+                if dist2 < distance:
+                    distance = dist2
+                pellets = pellets + 1
+    if pellets == 0:
+        return 0
+    
+    closest = float('inf')
+    for a in food:
+        for b in food:
+            if a is not b:
+                between = dist(a,b)
+                if between < closest:
+                    closest = between
+    if closest == float('inf'):
+        closest = 1
+
+    answer1 = closest*(pellets-1) + distance
+    
+
+    #return manhattan distance to farthest pellet
     farthest = 0
     for a in food:
         toPacman = dist(a, position)
         if toPacman > farthest:
             farthest = toPacman
-    return farthest
-    """
+    answer2 = farthest
+    
 
-    """
     #return max horizontal distance + max vertical distance between pellets
-    if printing: print position
-
-    if printing: print foodGrid
-    distance = float('inf')
-    #if first: print position
-    for i,row in enumerate(foodGrid):
-     #   if first: print row
-        for j,square in enumerate(row):
-      #      if first: print problem.walls.width-1-j,i
-            if square:
-                food.append((i,j))
     left, bottom = position
     right, top = position
     for a in food:
@@ -641,9 +626,28 @@ def foodHeuristic(state, problem):
     horiz = min(x-left, right-x)
     vert = min(y-bottom, top-y)
 
-    #if printing: print distance, '\n'
-    return right-left+top-bottom + horiz + vert
+    answer3 = right-left+top-bottom + horiz + vert
     """
+
+    #same as cornersheuristic but with limited subset of pellets
+    food = set()
+    for i,row in enumerate(foodGrid):
+        for j,square in enumerate(row):
+            if square:
+                food.add((i,j))
+    if 'remove' not in problem.heuristicInfo:
+        foodCopy = set(food)
+        remove = set()
+        for i in range(len(food)-13):
+            remove.add(foodCopy.pop())
+        problem.heuristicInfo['remove'] = frozenset(remove)
+    remove = problem.heuristicInfo['remove']
+    answer4 = dynamicHeur(position, food-remove, problem.heuristicInfo)
+
+
+    #this didn't improve anything so I commented it out
+    return max(answer1, answer2, answer3, answer4)
+
     """
     #sum of manhattan distance to nearest pellet/pacman for each pellet
     #inconsistent
@@ -673,43 +677,6 @@ def foodHeuristic(state, problem):
                     closest = between
         total = total + closest
     return total + distance
-    """
-    """
-    #distance of closest pair*number of pellets-1 + closest to pacman
-    if printing: print position
-
-    if printing: print foodGrid
-    pellets = 0
-    distance = float('inf')
-    #if first: print position
-    for i,row in enumerate(foodGrid):
-     #   if first: print row
-        for j,square in enumerate(row):
-      #      if first: print problem.walls.width-1-j,i
-            if square:
-                food.append((i,j))
-                dist2 = dist(position, (i,j))
-                if printing: print (i,j), dist2
-                if dist2 < distance:
-                    distance = dist2
-                pellets = pellets + 1
-    if pellets == 0:
-        return 0
-    
-    closest = float('inf')
-    for a in food:
-        for b in food:
-            if a is not b:
-                between = dist(a,b)
-                if printing: print a, b, between
-                if between < closest:
-                    closest = between
-    if closest == float('inf'):
-        closest = 1
-    if printing: print closest
-
-    #if printing: print distance, '\n'
-    return closest*(pellets-1) + distance
     """
 
 class ClosestDotSearchAgent(SearchAgent):
