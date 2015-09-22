@@ -66,9 +66,37 @@ class ReflexAgent(Agent):
     newFood = successorGameState.getFood()
     newGhostStates = successorGameState.getGhostStates()
     newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+    # print 'pos', newPos
+    # print 'food', newFood
+    # print 'ghosts', newGhostStates[0].getPosition()
+    # print 'scared', newScaredTimes
 
-    "*** YOUR CODE HERE ***"
-    return successorGameState.getScore()
+    food = []
+
+    for i,row in enumerate(newFood):
+        for j,square in enumerate(row):
+            if square:
+                food.append((i,j))
+
+    #return manhattan distance to farthest pellet
+    closest = float('inf')
+    for a in food:
+        toPacman = dist(a, newPos)
+        if toPacman < closest:
+            closest = toPacman
+
+    ghosts = 0
+    for ghost in newGhostStates:
+      ghosts = ghosts + dist(newPos, ghost.getPosition())
+
+    #print 'closest', closest
+    #print 'ghosts', ghosts
+
+    return 10000*(len(food)+.01)**-1 + (10*(closest+.01)**-1) - (5*(ghosts+.01)**-1)
+
+def dist(position, goal):
+    "The Manhattan distance heuristic for a PositionSearchProblem"
+    return abs(position[0] - goal[0]) + abs(position[1] - goal[1])
 
 def scoreEvaluationFunction(currentGameState):
   """
