@@ -8,7 +8,7 @@
 
 from util import manhattanDistance
 from game import Directions
-import random, util
+import random, util, math
 
 from game import Agent
 
@@ -77,13 +77,14 @@ class ReflexAgent(Agent):
         for j,square in enumerate(row):
             if square:
                 food.append((i,j))
+    if len(food) == 0:
+      return float('inf')
 
     #return manhattan distance to farthest pellet
     closest = float('inf')
     for a in food:
-        toPacman = dist(a, newPos)
-        if toPacman < closest:
-            closest = toPacman
+        closest = min(closest,dist(a, newPos))
+
 
     ghosts = 0
     for ghost in newGhostStates:
@@ -91,8 +92,12 @@ class ReflexAgent(Agent):
 
     #print 'closest', closest
     #print 'ghosts', ghosts
+    if ghosts <= 1:
+      ghosts = -float('inf')
+    else:
+      ghosts = math.log(ghosts-1)
 
-    return 10000*(len(food)+.01)**-1 + (10*(closest+.01)**-1) - (5*(ghosts+.01)**-1)
+    return (0-closest-1000*len(food)) + ghosts
 
 def dist(position, goal):
     "The Manhattan distance heuristic for a PositionSearchProblem"
