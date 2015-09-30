@@ -66,10 +66,6 @@ class ReflexAgent(Agent):
     newFood = successorGameState.getFood()
     newGhostStates = successorGameState.getGhostStates()
     newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-    # print 'pos', newPos
-    # print 'food', newFood
-    # print 'ghosts', newGhostStates[0].getPosition()
-    # print 'scared', newScaredTimes
 
     food = []
 
@@ -90,8 +86,6 @@ class ReflexAgent(Agent):
     for ghost in newGhostStates:
       ghosts = ghosts + dist(newPos, ghost.getPosition())
 
-    #print 'closest', closest
-    #print 'ghosts', ghosts
     if ghosts <= 1:
       ghosts = -float('inf')
     else:
@@ -158,8 +152,49 @@ class MinimaxAgent(MultiAgentSearchAgent):
       gameState.getNumAgents():
         Returns the total number of agents in the game
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    if 0 is self.depth:
+      return self.evaluationFunction(gameState)
+
+    pactions = gameState.getLegalActions(0)
+    if len(pactions) is 0:
+      return self.evaluationFunction(gameState)
+
+    best = -float('inf'), None
+    for paction in pactions:
+      result = self.minGetAction(gameState.generateSuccessor(0, paction), 0, 1)
+      if result > best[0]:
+        best = result, paction
+
+    return best[1]
+
+
+  def maxGetAction(self, gameState, plies):
+    if plies is self.depth:
+      return self.evaluationFunction(gameState)
+
+    pactions = gameState.getLegalActions(0)
+    if len(pactions) is 0:
+      return self.evaluationFunction(gameState)
+
+    best = -float('inf')
+    for paction in pactions:
+      best = max(best, self.minGetAction(gameState.generateSuccessor(0, paction), plies, 1))
+  
+    return best
+
+  def minGetAction(self, gameState, plies, i):
+    ghostions = gameState.getLegalActions(i)
+    if len(ghostions) is 0:
+      return self.evaluationFunction(gameState)
+
+    worst = float('inf')
+    if i+1 is gameState.getNumAgents():
+      for ghostion in ghostions:
+        worst = min(worst, self.maxGetAction(gameState.generateSuccessor(i, ghostion), plies+1))
+    else:
+      for ghostion in ghostions:
+        worst = min(worst, self.minGetAction(gameState.generateSuccessor(i, ghostion), plies, i+1))
+    return worst
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
   """
@@ -170,8 +205,55 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     """
       Returns the minimax action using self.depth and self.evaluationFunction
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    if 0 is self.depth:
+      return self.evaluationFunction(gameState)
+
+    pactions = gameState.getLegalActions(0)
+    if len(pactions) is 0:
+      return self.evaluationFunction(gameState)
+
+    best = -float('inf'), None
+    for paction in pactions:
+      result = self.minGetAction(gameState.generateSuccessor(0, paction), 0, 1, best[0])
+      if result > best[0]:
+        best = result, paction
+
+    return best[1]
+
+
+  def maxGetAction(self, gameState, plies, worst):
+    if plies is self.depth:
+      return self.evaluationFunction(gameState)
+
+    pactions = gameState.getLegalActions(0)
+    if len(pactions) is 0:
+      return self.evaluationFunction(gameState)
+
+    best = -float('inf')
+    for paction in pactions:
+      best = max(best, self.minGetAction(gameState.generateSuccessor(0, paction), plies, 1, best))
+      if best > worst:
+        return best
+  
+    return best
+
+  def minGetAction(self, gameState, plies, i, best):
+    ghostions = gameState.getLegalActions(i)
+    if len(ghostions) is 0:
+      return self.evaluationFunction(gameState)
+
+    worst = float('inf')
+    if i+1 is gameState.getNumAgents():
+      for ghostion in ghostions:
+        worst = min(worst, self.maxGetAction(gameState.generateSuccessor(i, ghostion), plies+1, worst))
+        if worst < best:
+          return worst
+    else:
+      for ghostion in ghostions:
+        worst = min(worst, self.minGetAction(gameState.generateSuccessor(i, ghostion), plies, i+1, best))
+        if worst < best:
+          return worst
+    return worst
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
   """
@@ -185,8 +267,50 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
       All ghosts should be modeled as choosing uniformly at random from their
       legal moves.
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    if 0 is self.depth:
+      return self.evaluationFunction(gameState)
+
+    pactions = gameState.getLegalActions(0)
+    if len(pactions) is 0:
+      return self.evaluationFunction(gameState)
+
+    best = -float('inf'), None
+    for paction in pactions:
+      result = self.expGetAction(gameState.generateSuccessor(0, paction), 0, 1)
+      if result > best[0]:
+        best = result, paction
+    #print best
+    return best[1]
+
+
+  def maxGetAction(self, gameState, plies):
+    if plies is self.depth:
+      return self.evaluationFunction(gameState)
+
+    pactions = gameState.getLegalActions(0)
+    if len(pactions) is 0:
+      return self.evaluationFunction(gameState)
+
+    best = -float('inf')
+    for paction in pactions:
+      best = max(best, self.expGetAction(gameState.generateSuccessor(0, paction), plies, 1))
+  
+    return best
+
+  def expGetAction(self, gameState, plies, i):
+    ghostions = gameState.getLegalActions(i)
+    if len(ghostions) is 0:
+      return self.evaluationFunction(gameState)
+
+    worst = 0
+    numGhosts = gameState.getNumAgents()-1
+    if i is numGhosts:
+      for ghostion in ghostions:
+        worst = worst + self.maxGetAction(gameState.generateSuccessor(i, ghostion), plies+1)/numGhosts
+    else:
+      for ghostion in ghostions:
+        worst = worst +  self.expGetAction(gameState.generateSuccessor(i, ghostion), plies, i+1)/numGhosts
+    return worst
 
 def betterEvaluationFunction(currentGameState):
   """
@@ -196,7 +320,39 @@ def betterEvaluationFunction(currentGameState):
     DESCRIPTION: <write something here so we know what you did>
   """
   "*** YOUR CODE HERE ***"
-  util.raiseNotDefined()
+
+  newPos = currentGameState.getPacmanPosition()
+  newFood = currentGameState.getFood()
+  newGhostStates = currentGameState.getGhostStates()
+  newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+
+  food = []
+
+  for i,row in enumerate(newFood):
+      for j,square in enumerate(row):
+          if square:
+              food.append((i,j))
+  if len(food) == 0:
+    return 999999999 + currentGameState.getScore()
+
+  #return manhattan distance to farthest pellet
+  closest = float('inf')
+  for a in food:
+      closest = min(closest,dist(a, newPos))
+
+
+  ghosts = 0
+  for ghost in newGhostStates:
+    distance = dist(newPos, ghost.getPosition())
+    if distance < 1:
+      distance = -float('inf')
+    else:
+      distance = math.log(distance-.9999)
+    ghosts = ghosts + distance
+
+  return 0 - closest - 50*len(food) + ghosts/2 + currentGameState.getScore()
+
+  #util.raiseNotDefined()
 
 # Abbreviation
 better = betterEvaluationFunction
@@ -216,4 +372,3 @@ class ContestAgent(MultiAgentSearchAgent):
     """
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
-
