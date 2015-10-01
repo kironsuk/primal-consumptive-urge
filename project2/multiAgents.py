@@ -344,13 +344,10 @@ def betterEvaluationFunction(currentGameState):
   ghosts = 0
   for ghost in newGhostStates:
     distance = dist(newPos, ghost.getPosition())
-    if distance < 1:
-      distance = -float('inf')
-    else:
-      distance = math.log(distance-.9999)
-    ghosts = ghosts + distance
+    val = 0-math.exp(0-(distance-4))
+    ghosts = ghosts + val
 
-  return 0 - closest - 50*len(food) + ghosts/2 + currentGameState.getScore()
+  return 0 - closest - 20*len(food) + ghosts + currentGameState.getScore()
 
   #util.raiseNotDefined()
 
